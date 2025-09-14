@@ -16,7 +16,7 @@ The objective is to create a machine learning model to predict whether a legisla
 - change bill_year = 2025 or 2024, etc
 - run "python scrapper_MD_legislation.py" on command line
 
-### `scrapper.py`
+### `scrapper_MD_legislation.py`
 Scrapes all legislative bills for a given year. The output includes:
 
 - `bill_xxxx.pdf`: Legislative bill document
