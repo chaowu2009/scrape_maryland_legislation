@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import csv
 import os
 
-bill_year = 2024
+bill_year = 2025
 bill_folder = f'md_house_bill_{bill_year}'
 
 os.makedirs(bill_folder, exist_ok=True)
@@ -22,61 +22,31 @@ def download_pdf(url, filename):
 
 def scrape_and_save_dl_table(bill_number):
     """
-    Downloads a webpage, extracts data from a <dl> list within a specified
-    class, and saves it to a CSV file.
+    Downloads a webpage, extracts data from the <dl> and details-tab-info sections,
+    and saves it to a CSV file using shared extraction functions.
     """
+    from extract_bill_info import extract_top_box, extract_details_tab_info, write_bill_summary_to_csv
+    
     url = f"https://mgaleg.maryland.gov/mgawebsite/Legislation/Details/hb{bill_number:04d}?ys={bill_year}RS"
     output_filename = f"{bill_folder}/bill_{bill_number:04d}_summary.csv"
     try:
-        # Step 1: Download the webpage content
         response = requests.get(url)
-        response.raise_for_status()  # Check for HTTP request errors
-        
-        # Step 2: Parse the HTML content with BeautifulSoup
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Step 3: Find the specific <dl> element by its class
-        dl_element = soup.find('dl', class_='row top-box')
-        
-        if not dl_element:
-            print("Could not find the 'row top-box' element on the page.")
-            return
-
-        # Step 4: Extract the data
-        extracted_data = {}
-        dt_tags = dl_element.find_all('dt')
-        dd_tags = dl_element.find_all('dd')
-
-        for dt, dd in zip(dt_tags, dd_tags):
-            field_name = dt.get_text(strip=True)
-            
-            # Special handling for "Sponsored by" to get all names
-            if field_name == "Sponsored by":
-                # Find all <a> tags within the <dd> for sponsor names
-                sponsor_names = [a.get_text(strip=True) for a in dd.find_all('a')]
-                field_value = ", ".join(sponsor_names)
-            # Special handling for "Analysis" to get link text
-            elif field_name == "Analysis":
-                link_text = dd.find('a').get_text(strip=True) if dd.find('a') else "N/A"
-                field_value = link_text
-            # General case for all other fields
-            else:
-                field_value = dd.get_text(strip=True)
-            
-            extracted_data[field_name] = field_value
-            
-        # Step 5: Save the data to a CSV file
-        with open(output_filename, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["Field", "Value"])  # Write the header row
-            for field, value in extracted_data.items():
-                writer.writerow([field, value]) # Write the data rows
-
+        top_box = extract_top_box(soup)
+        details_tab = extract_details_tab_info(soup)
+        csv_data = {
+            'Title': top_box.get('Title', ''),
+            'Sponsored by': top_box.get('Sponsored by', ''),
+            'Status': top_box.get('Status', ''),
+            'Synopsis': details_tab.get('Synopsis', ''),
+            'Committees': details_tab.get('Committees', ''),
+        }
+        write_bill_summary_to_csv(csv_data, output_filename)
         print(f"Successfully scraped data and saved to {output_filename}")
         print("\nExtracted Data:")
-        for field, value in extracted_data.items():
+        for field, value in csv_data.items():
             print(f"- {field}: {value}")
-
     except requests.exceptions.RequestException as e:
         print(f"Error downloading the page: {e}")
     except Exception as e:
@@ -120,7 +90,7 @@ def scrape_witness_list(bill_number):
         print(f"Could not find the witness list table for HB{bill_number:04d}.")
 
 if __name__ == "__main__":
-    for bill_num in range(1, 2500):  # Loop for numbers 0001 to 0010
+    for bill_num in range(1, 2000):  # Loop for numbers 0001 to 0010
         padded_bill_num = f"{bill_num:04d}"
 
         print(f"\n--- Processing Bill HB{padded_bill_num} ---")

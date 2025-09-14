@@ -1,7 +1,7 @@
 
-# Maryland House Bill 2025 Project
+#  2025 MIT Breakthrough Tech AI Advisor Project 
 
-This project was developed as part of the 2025 MIT Breakthrough Tech AI program.
+This project was developed as part of the 2025 MIT Breakthrough Tech AI Advisor program. I am advising four college students for four months on this DS project. 
 
 ## Project Overview
 
@@ -9,10 +9,12 @@ The objective is to create a machine learning model to predict whether a legisla
 
 - Logistic Regression
 - XGBoost
-- Deep Learning Neural Networks
+- Deep Learning Neural Network
 - Large Language Models (LLMs)
 
 ## Data Scraping
+- change bill_year = 2025 or 2024, etc
+- run "python scrapper_MD_legislation.py" on command line
 
 ### `scrapper.py`
 Scrapes all legislative bills for a given year. The output includes:
